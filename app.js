@@ -12,7 +12,8 @@ const {
     SESS_SECRET='hello',
     SESS_LIFETIME = TWO_HOURS
 } = process.env;
-
+//setting the templating engine engine
+app.set('view engine','ejs')
 //middlewares
 app.use(bodyParser({extended : true}))
 app.use(session({ //session middleware
@@ -27,7 +28,8 @@ app.use(session({ //session middleware
 
     } 
 }))
-app.set('view engine','ejs')
+
+
 
 
 const redirectLogin = (req,res,next) => {
@@ -44,24 +46,28 @@ const redirectHome = (req,res,next) => {
         next()
 
 }
-app.use((req,res,next) => {
-    const {userId} = req.session
-    if (userId){
-        console.log(`session id is ${userId}`)
-    db.query('SELECT * FROM users WHERE id=?',[userId],(err,result) => {
-        console.log(result[0])
-        res.locals.user = result[0];
-    })
 
-         
-    }
-    next()
-})
-app.route('/')
+
+//middleware to store session data in res.local object
+// app.use('/index',(req,res,next) => {
+//     const {userId} = req.session
+//     if (userId){
+//         // console.log(`session id is ${userId}`)
+//         db.querySync('SELECT * FROM users WHERE id=?',[userId],(err,result) => {
+//             if(err)
+//             throw err;
+//             res.locals.user = result[0].name;
+//             // console.log('middleware called and request is',res.locals)
+//             console.log('first')
+//         })
+        
+//     }
+//     next()
+// })
+app.route(['/index','/'])
     .get((req,res) => {
         const {userId} = req.session
-        console.log(req.session.userId)
-        console.log(req.session)
+        // console.log(req.session.userId)
         return res.render('index',{userId:userId})
     })
 
@@ -71,11 +77,11 @@ app.route('/')
     })
     .post(redirectHome,(req,res) => {
         // const {email}
-        console.log(req.body)
+        console.log('req body',req.body)
         const {email,password} = req.body
         if(email && password){
             db.query('SELECT id,name,email,password FROM users WHERE email=?',[email],(err,result) => {
-                console.log(result)
+                // console.log(result)
                 if(err){
                     console.log(error)
                     res.sendStatus(400)
@@ -86,9 +92,9 @@ app.route('/')
                 }
 
                 else if(email == result[0].email){
-                    console.log('tatti')
                     if(password == result[0].password){
                         req.session.userId = result[0].id;
+                        req.session.user=result[0]
                         return res.render('home',{name:result[0].name})
                         
                     }
@@ -104,73 +110,57 @@ app.route('/')
             res.redirect('/login')
     })
 
-// app.route('/register')
-//     .get(redirectHome,(req,res) => {
-//         res.render('register')
-//     })
-//     .post(redirectHome,(req,res) => {
-//         console.log(req.body)
-//         const{name,email,password} = req.body
-//         if(name && email && password){
-//             db.query('SELECT email FROM users WHERE name=?',[name],(err,result,fields) => {
-//                 console.log(result)
-//                 if(err){
-//                     console.log(err)
-//                     res.sendStatus(400)
-//                 }
-//                 else if(result.length < 1 || result == undefined){
-//                     query = "INSERT INTO users(name,email,password) VALUES (?,?,?)";
-//                     val =[name,email,password]
-//                     console.log('values are ',val)
-//                     db.query(query,val,(err,result) => {
-//                         if(err){
-//                             throw err;
-//                         }   
+app.route('/register')
+    .get(redirectHome,(req,res) => {9
+        res.render('register')
+    })
+    .post(redirectHome,(req,res) => {
+        console.log('register reqBody',req.body)
+        const{name,email,password} = req.body
+        if(name && email && password){
+            db.query('SELECT email FROM users WHERE name=?',[name],(err,result,fields) => {
+                // console.log(result)
+                if(err){
+                    console.log(err)
+                    res.sendStatus(400)
+                }
+                else if(result.length < 1 || result == undefined){
+                    query = "INSERT INTO users(name,email,password) VALUES (?,?,?)";
+                    val =[name,email,password]
+                    console.log('values are ',val)
+                    db.query(query,val,(err,result) => {
+                        if(err){
+                            throw err;
+                        }   
                         
-//                         console.log('Data inserted into Db\n')
-//                         console.log(result.affectedRows);
-//                         res.render('login')
-//                         return;
+                        console.log('Data inserted into Db\n')
+                        console.log(result.affectedRows);
+                        res.render('login')
+                        return;
 
-//                     })
-//                 }
-//                 else if(result.length>0 && result[0].email && result[0].email === email){
-//                     console.log('result is ',result[0].email)
-//                     return res.render('error',{string:'Email already taken'})
+                    })
+                }
+                else if(result.length>0 && result[0].email && result[0].email === email){
+                    console.log('result is ',result[0].email)
+                    return res.render('error',{string:'Email already taken'})
 
-//                 }
+                }
                 
 
-//             })
-//         }
+            })
+        }
              
         
-//             // if(!exist){
-//             // val =[name,email,password]
-//             // console.log('values are ',val)
-//             // db.query(query,val,(err,result) => {
-//             //     if(err){
-//             //         throw err;
-//             //     }   
-                
-//             //     console.log('Data inserted into Db\n')
-//             //     console.log(result.affectedRows);
-
-//             // })
-//             // db.end()
-//             // return res.render('login')
-        
-        
-
-    
-//     // res.redirect('/register')
-//     })
+    })
     //home
-app.get('/home',redirectLogin,(req,res)=>{
-    const {user} = res.locals;
-res.render('home',{name:user.name})
+app.route('/home')
+ .get(redirectLogin,(req,res)=>{
+    
+     console.log(req.session.user.name)
+return res.render('home',{name:req.session.user.name})
 
 })
+
 app.post('/logout',(req,res) => {
     req.session.destroy((err) => {
         if(err)
