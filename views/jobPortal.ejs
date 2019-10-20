@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+
+    <title>Job Portal</title>
+</head>
+<body>
+   <table class="table table-hover table-dark">
+        <tr>
+                <th>
+                    <td>Job Title</td>
+                    <td>Job Description</td>
+                    <td>Keywords</td>
+                    <td>Location</td>
+                </th>
+            </tr>
+            <%for(job of jobs){%>
+                <tr>
+                    <%for(value in job){%>
+                        <td><%=job[value]%></td>
+                    <%}%>
+                 </tr>
+                <%}%>
+   </table>
+   <br>
+<%if(userType=='company'){%>
+<a href="/postJob"><button class="btn btn-primary">Post Job</button></a>
+<form action="/deleteJob" method="POST" class="form-inline">
+    <div class="form-group"><input type="text" name="deleteJob" placeholder="Enter Job to Delete" required></div>
+    <div ><button type="submit" class="btn btn-primary"  >Remove a Job</button></div>
+</form>
+<%}%>
+
+<form action="/searchJob" method="POST" class="form-inline">
+    <div class="form-group">
+        <input type="text" placeholder="Search by title" name="searchJob" required>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+
+</form>
+</body>
+</html>
