@@ -2,22 +2,30 @@ const express = require('express');
 const session = require('express-session')
 const bodyParser = require('body-parser')
 const db=require('./model/config')
+const cors = require('cors')
+const morgan = require('morgan')
 
 const app = express()
 
 const TWO_HOURS = 1000*60*60* 2
 
 const {
-    PORT = 3000,
+    PORT = 4000,
     SESS_NAME = 'sid',
     SESS_SECRET='hello',
     SESS_LIFETIME = TWO_HOURS
 } = process.env;
 
+app.use(cors({
+    origin:"http://localhost:3000",
+    credentials: true
+    })) //crossorigin requests
 //getting routes
 //setting the templating engine engine
+
 app.set('view engine','ejs')
 //middlewares
+app.use(morgan('combined'))
 app.use(bodyParser({extended : true}))
 app.use(session({ //session middleware
     name:SESS_NAME,
@@ -27,12 +35,15 @@ app.use(session({ //session middleware
     cookie:{
         sameSite: true,
         maxAge:SESS_LIFETIME,
-        secure:false
+        secure:false,
+        httpOnly:false
         
     } 
 }))
 app.use(require('./routes/appRoutes'))
+app.use(require('./routes/emailVerificationRoutes'))
 app.use(require('./routes/jobRoutes'))
+app.use('/api',require('./routes/apiRoutes'))
 
 
 
@@ -59,12 +70,12 @@ app.use(require('./routes/jobRoutes'))
 // })
 
 
-db.connect((err) => {
-    if(err){
-        throw err;
-    }
-    console.log('Connected to database')
-});
+// db.connect((err) => {
+//     if(err){
+//         throw err;
+//     }
+//     console.log('Connected to database')
+// });
 
 app.listen(PORT,()=> console.log(
     `http://localhost:${PORT}`
